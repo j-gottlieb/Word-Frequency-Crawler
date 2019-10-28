@@ -2,20 +2,8 @@ const request = require('request');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const {isValidWord} = require('./helper');
-const { performance } = require('perf_hooks');
 const json2csv = require('json2csv').parse;
 const fs = require('fs');
-
-const getUrls = html => {
-  const $ = cheerio.load(html);
-  const links = $('a', '.mw-body')
-
-  const hrefs = []
-  links.each((i, link) => {
-    hrefs.push($(link).attr('href'))
-  })
-  return hrefs
-}
 
 const getWordFrequencies = (html, wordFrequencies) => {
   const $ = cheerio.load(html);
@@ -53,6 +41,7 @@ const recursivelyCrawl = ({attemptCount, wordFrequencies}) =>
   })
 
 const crawl = results => {
+  // if its the first time, we wont have any results to add to
   if (!results) {
     recursivelyCrawl({attemptCount: 0, wordFrequencies: {}})
       .then(results => {
@@ -61,7 +50,7 @@ const crawl = results => {
   } else {
     recursivelyCrawl(results)
       .then(({attemptCount, wordFrequencies}) => {
-        if (attemptCount < 5000) {
+        if (attemptCount < 5) {
           crawl({attemptCount, wordFrequencies})
         } else {
           const csvFormat = [];
@@ -70,7 +59,7 @@ const crawl = results => {
           }
           const fields = ['word', 'frequency'];
           const csv = json2csv(csvFormat, fields)
-          fs.appendFile('word_frequencies.csv', csv, err => console.log('saved'))
+          fs.appendFile('word_frequencies_short.csv', csv, err => console.log(`Saved frequencies for ${csvFormat.length} words`))
         }
       })
   }
