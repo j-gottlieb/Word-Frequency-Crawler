@@ -2,8 +2,10 @@ const request = require('request');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const {isValidWord} = require('./helper');
+const ObjectsToCsv = require('objects-to-csv');
 const json2csv = require('json2csv').parse;
 const fs = require('fs');
+const wretch = require('wretch');
 
 const calculatePercentiles = wordFrequencies => {
   // 100 / distinct words * rank
@@ -18,7 +20,6 @@ const calculatePercentiles = wordFrequencies => {
   })
   const wordsWithRank = sortedWordArray.map(word => {
     const rank = Object.keys(distinctFrequencies).filter(count => count > word.count).length
-    console.log(rank)
     return {...word, rank}
   })
 
@@ -27,7 +28,7 @@ const calculatePercentiles = wordFrequencies => {
   return wordsWithRank
     .map(word => {
       const percentile = Math.round(100 / highestRank * word.rank)
-      return {...word, percentile}
+      return {...word, percentile, score: percentile * 3}
   })
 }
 
@@ -76,17 +77,23 @@ const crawl = results => {
   } else {
     recursivelyCrawl(results)
       .then(({attemptCount, wordFrequencies}) => {
-        if (attemptCount < 500) {
+        if (attemptCount < 1000) {
           crawl({attemptCount, wordFrequencies})
         } else {
-          // console.log(calculatePercentiles(wordFrequencies))
+          const csv = new ObjectsToCsv(calculatePercentiles(wordFrequencies));
+          csv.toDisk('word_frequencies_1000.csv');
+          console.log(calculatePercentiles(wordFrequencies))
           // const csvFormat = [];
           // for (let key in wordFrequencies) {
           //   csvFormat.push({word: key, frequency: wordFrequencies[key]})
           // }
-          // const fields = ['word', 'frequency'];
-          // const csv = json2csv(csvFormat, fields)
-          fs.writeFile('word_frequencies_500.json', JSON.stringify(calculatePercentiles(wordFrequencies)), err => console.log(`Saved frequencies for ${csvFormat.length} words`))
+          // const fields = ['word', 'count', 'rank', 'percentile', 'score'];
+          // const csv = json2csv(calculatePercentiles(wordFrequencies), fields)
+          // // wretch('http://localhost:5000/word_frequencies')
+          // //   .json(calculatePercentiles(wordFrequencies))
+          // //   .post()
+          // //   .res(res => console.log(res))
+          // fs.writeFile('word_frequencies_10.csv', csv, err => console.log(`Saved frequencies for ${csvFormat.length} words`))
         }
       })
   }
