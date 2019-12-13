@@ -8,7 +8,6 @@ const fs = require('fs');
 const wretch = require('wretch');
 
 const calculatePercentiles = wordFrequencies => {
-  // 100 / distinct words * rank
   const wordKeys = Object.keys(wordFrequencies)
   const wordArray = wordKeys.map(word => ({word, count: wordFrequencies[word]}))
   const sortedWordArray = wordArray.sort((a, b) => b.count - a.count)
@@ -77,11 +76,12 @@ const crawl = results => {
   } else {
     recursivelyCrawl(results)
       .then(({attemptCount, wordFrequencies}) => {
-        if (attemptCount < 1000) {
+        console.log(attemptCount)
+        if (attemptCount < 10000) {
           crawl({attemptCount, wordFrequencies})
         } else {
           const csv = new ObjectsToCsv(calculatePercentiles(wordFrequencies));
-          csv.toDisk('word_frequencies_1000.csv');
+          csv.toDisk('word_frequencies_10000.csv');
           console.log(calculatePercentiles(wordFrequencies))
           // const csvFormat = [];
           // for (let key in wordFrequencies) {

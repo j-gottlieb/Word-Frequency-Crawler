@@ -1,7 +1,10 @@
+const Typo = require('typo-js');
+const dictionary = new Typo
+
 const isValidWord = word => {
   const lowerCaseLetterRegex = /^[a-z]+$/;
 
-  return lowerCaseLetterRegex.test(word)
+  return lowerCaseLetterRegex.test(word) && dictionary.check(word)
 }
 
 const getUrls = html => {
